@@ -29,7 +29,7 @@ function clearStoredSubmissions() {
 
 // Send a submission to the backend (Google Apps Script web app)
 function sendSubmission(submission) {
-  return fetch('https://script.google.com/macros/s/AKfycbz-JBCdHeXbEPKDhb1h4pBxjTHl-WRQx4NUfdE54DjIYxrke4bhNgctTiCgm01BsJQ0MA/exec', {
+  return fetch('https://script.google.com/macros/s/AKfycbxVcPIUbilKyUqUYXRPC8PTe-zl_ceADc3mkcmvkJomb4ddXCVTQn4JH-8fCPSraSUNOw/exec', {
     method: 'POST',
     mode: 'cors', // ensures CORS is used
     headers: { 'Content-Type': 'text/plain' },  // use text/plain to avoid preflight
