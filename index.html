@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Patient Registration</title>
-  <!-- Link to the manifest for PWA functionality -->
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script>
@@ -17,49 +16,54 @@
       });
     }
 
-    // --- Offline Data Storage and Sync Logic ---
-
-    // Save data offline using localStorage (for a simple demo).
+    // Save data offline using localStorage.
     function saveOfflineData(data) {
-      // Retrieve any unsynced data from localStorage or initialize an empty array.
       let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
       unsyncedData.push(data);
       localStorage.setItem('unsyncedData', JSON.stringify(unsyncedData));
+      console.log('Data saved offline:', data);
     }
 
     // Send data to the Google Apps Script endpoint.
-    function sendData(data, callback) {
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbxOkIcDQvG96JbY9QJ8yqwyXJPB8rUTJ-WnsOqyO77ClPnKPMB5zbNejvYdCnB_hb6GUA/exec'; // Replace with your actual URL
+    function sendData(data) {
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbxOkIcDQvG96JbY9QJ8yqwyXJPB8rUTJ-WnsOqyO77ClPnKPMB5zbNejvYdCnB_hb6GUA/exec'; 
 
-      fetch(scriptURL, {
+      return fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors', // "no-cors" can work for simple POSTs to Google Apps Script.
+        mode: 'no-cors',
         body: JSON.stringify(data)
       })
-      .then(response => {
-        console.log('Data sent successfully');
-        if(callback) callback(true);
+      .then(() => {
+        console.log('Data sent successfully for:', data);
+        return true;
       })
       .catch(error => {
-        console.error('Error sending data', error);
-        if(callback) callback(false);
+        console.error('Error sending data for:', data, error);
+        return false;
       });
     }
 
-    // Sync any stored offline data when connectivity is restored.
-    function syncData() {
+    // Asynchronously sync any stored offline data when connectivity is restored.
+    async function syncData() {
       let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
-      if (unsyncedData.length > 0) {
-        // Loop over unsynced records and send them.
-        unsyncedData.forEach(function(data, index) {
-          sendData(data, function(success) {
-            if (success) {
-              // Remove the synced record.
-              unsyncedData.splice(index, 1);
-              localStorage.setItem('unsyncedData', JSON.stringify(unsyncedData));
-            }
-          });
-        });
+      if (unsyncedData.length === 0) {
+        return;
+      }
+      
+      let remainingData = [];
+      for (const data of unsyncedData) {
+        const success = await sendData(data);
+        if (!success) {
+          remainingData.push(data);
+        }
+      }
+      
+      localStorage.setItem('unsyncedData', JSON.stringify(remainingData));
+      
+      if (remainingData.length > 0) {
+        console.log('Some records were not synced and remain stored locally.');
+      } else {
+        console.log('All offline data has been successfully synced.');
       }
     }
 
@@ -67,19 +71,16 @@
     function submitForm(event) {
       event.preventDefault();
 
-      // Gather form values.
       const patientName = document.getElementById('patientName').value;
       const age = document.getElementById('age').value;
       const email = document.getElementById('email').value;
 
-      // Build the data object.
       const data = {
         patientName: patientName,
         age: age,
         email: email
       };
 
-      // Check connectivity status.
       if (navigator.onLine) {
         sendData(data);
       } else {
@@ -87,19 +88,16 @@
         saveOfflineData(data);
       }
 
-      // Reset the form.
       document.getElementById('registrationForm').reset();
     }
 
-    // When the page loads, if online, try to sync any offline data.
+    window.addEventListener('online', syncData);
+
     window.addEventListener('load', function() {
       if (navigator.onLine) {
         syncData();
       }
     });
-
-    // Listen for the browser regaining online connectivity.
-    window.addEventListener('online', syncData);
   </script>
 </head>
 <body>
