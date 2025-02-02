@@ -40,12 +40,14 @@
       try {
         const response = await fetch(scriptURL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
         });
 
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
