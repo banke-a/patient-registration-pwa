@@ -26,11 +26,10 @@
 
     // Send data to the Google Apps Script endpoint.
     function sendData(data) {
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbxOkIcDQvG96JbY9QJ8yqwyXJPB8rUTJ-WnsOqyO77ClPnKPMB5zbNejvYdCnB_hb6GUA/exec'; 
-
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbxOkIcDQvG96JbY9QJ8yqwyXJPB8rUTJ-WnsOqyO77ClPnKPMB5zbNejvYdCnB_hb6GUA/exec'; // Replace with your actual URL
       return fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors',
+        mode: 'no-cors',  // using no-cors mode for a simple POST
         body: JSON.stringify(data)
       })
       .then(() => {
@@ -47,10 +46,13 @@
     async function syncData() {
       let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
       if (unsyncedData.length === 0) {
-        return;
+        return; // Nothing to sync.
       }
       
+      // Array to hold records that fail to send.
       let remainingData = [];
+      
+      // Loop over each unsynced record sequentially.
       for (const data of unsyncedData) {
         const success = await sendData(data);
         if (!success) {
@@ -58,6 +60,7 @@
         }
       }
       
+      // Update localStorage with any records that were not successfully synced.
       localStorage.setItem('unsyncedData', JSON.stringify(remainingData));
       
       if (remainingData.length > 0) {
@@ -70,34 +73,40 @@
     // Handle form submission.
     function submitForm(event) {
       event.preventDefault();
-
+      
+      // Gather form values.
       const patientName = document.getElementById('patientName').value;
       const age = document.getElementById('age').value;
       const email = document.getElementById('email').value;
-
+      
+      // Build the data object.
       const data = {
         patientName: patientName,
         age: age,
         email: email
       };
-
+      
+      // Check connectivity and either send immediately or save offline.
       if (navigator.onLine) {
         sendData(data);
       } else {
         alert("No connectivity; data saved offline.");
         saveOfflineData(data);
       }
-
+      
+      // Reset the form.
       document.getElementById('registrationForm').reset();
     }
 
-    window.addEventListener('online', syncData);
-
+    // When the page loads, if online, attempt to sync offline data.
     window.addEventListener('load', function() {
       if (navigator.onLine) {
         syncData();
       }
     });
+    
+    // Listen for the browser regaining online connectivity.
+    window.addEventListener('online', syncData);
   </script>
 </head>
 <body>
