@@ -19,10 +19,17 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[Service Worker] Caching app shell');
-        return cache.addAll(urlsToCache);
+        return Promise.all(
+          urlsToCache.map(url => {
+            return cache.add(url).catch(err => {
+              console.error(`[Service Worker] Failed to cache ${url}:`, err);
+            });
+          })
+        );
       })
   );
 });
+
 
 // Activate: Remove old caches
 self.addEventListener('activate', event => {
