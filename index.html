@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Patient Registration</title>
+  <!-- Link to the manifest for PWA functionality -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // --- Service Worker Registration ---
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+      .then(function(reg) {
+        console.log('Service Worker Registered', reg);
+      }).catch(function(err) {
+        console.error('Service Worker registration failed: ', err);
+      });
+    }
+
+    // --- Offline Data Storage and Sync Logic ---
+
+    // Save data offline using localStorage (for a simple demo).
+    function saveOfflineData(data) {
+      // Retrieve any unsynced data from localStorage or initialize an empty array.
+      let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
+      unsyncedData.push(data);
+      localStorage.setItem('unsyncedData', JSON.stringify(unsyncedData));
+    }
+
+    // Send data to the Google Apps Script endpoint.
+    function sendData(data, callback) {
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbxOkIcDQvG96JbY9QJ8yqwyXJPB8rUTJ-WnsOqyO77ClPnKPMB5zbNejvYdCnB_hb6GUA/exec'; // Replace with your actual URL
+
+      fetch(scriptURL, {
+        method: 'POST',
+        mode: 'no-cors', // "no-cors" can work for simple POSTs to Google Apps Script.
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        console.log('Data sent successfully');
+        if(callback) callback(true);
+      })
+      .catch(error => {
+        console.error('Error sending data', error);
+        if(callback) callback(false);
+      });
+    }
+
+    // Sync any stored offline data when connectivity is restored.
+    function syncData() {
+      let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
+      if (unsyncedData.length > 0) {
+        // Loop over unsynced records and send them.
+        unsyncedData.forEach(function(data, index) {
+          sendData(data, function(success) {
+            if (success) {
+              // Remove the synced record.
+              unsyncedData.splice(index, 1);
+              localStorage.setItem('unsyncedData', JSON.stringify(unsyncedData));
+            }
+          });
+        });
+      }
+    }
+
+    // Handle form submission.
+    function submitForm(event) {
+      event.preventDefault();
+
+      // Gather form values.
+      const patientName = document.getElementById('patientName').value;
+      const age = document.getElementById('age').value;
+      const email = document.getElementById('email').value;
+
+      // Build the data object.
+      const data = {
+        patientName: patientName,
+        age: age,
+        email: email
+      };
+
+      // Check connectivity status.
+      if (navigator.onLine) {
+        sendData(data);
+      } else {
+        alert("No connectivity; data saved offline.");
+        saveOfflineData(data);
+      }
+
+      // Reset the form.
+      document.getElementById('registrationForm').reset();
+    }
+
+    // When the page loads, if online, try to sync any offline data.
+    window.addEventListener('load', function() {
+      if (navigator.onLine) {
+        syncData();
+      }
+    });
+
+    // Listen for the browser regaining online connectivity.
+    window.addEventListener('online', syncData);
+  </script>
+</head>
+<body>
+  <h1>Patient Registration</h1>
+  <form id="registrationForm" onsubmit="submitForm(event)">
+    <label for="patientName">Patient Name:</label><br>
+    <input type="text" id="patientName" name="patientName" required><br><br>
+
+    <label for="age">Age:</label><br>
+    <input type="number" id="age" name="age" required><br><br>
+
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <input type="submit" value="Submit">
+  </form>
+</body>
+</html>
