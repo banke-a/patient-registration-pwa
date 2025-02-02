@@ -1,0 +1,18 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+form {
+  max-width: 400px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 15px;
+}
+
+button {
+  padding: 10px 20px;
+}
