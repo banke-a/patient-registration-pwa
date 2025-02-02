@@ -1,128 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Patient Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <script>
-    // --- Service Worker Registration ---
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-      .then(function(reg) {
-        console.log('Service Worker Registered:', reg);
-      }).catch(function(err) {
-        console.error('Service Worker registration failed:', err);
-      });
-    }
-
-    // Simple UUID generator
-    function generateUUID() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
-
-    // Save data offline using localStorage
-    function saveOfflineData(data) {
-      let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
-      unsyncedData.push(data);
-      localStorage.setItem('unsyncedData', JSON.stringify(unsyncedData));
-      console.log('Data saved offline:', data);
-    }
-
-    // Send data to the Google Apps Script endpoint
-    async function sendData(data) {
-      const scriptURL = 'hhttps://script.google.com/macros/s/AKfycbxeQYPJTZopJetsw_OUwXm_q6NrGoBAIO1RuIt7lfgN8hq83e-aCkCg-sQ7L7hQr_j15Q/exec'; // Replace with your actual URL
-
-      try {
-        const response = await fetch(scriptURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('Data sent successfully:', result);
-        return true;
-      } catch (error) {
-        console.error('Error sending data:', error);
-        return false;
-      }
-    }
-
-    // Sync stored offline data when connectivity is restored
-    async function syncData() {
-      let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
-      if (unsyncedData.length === 0) {
-        console.log('No data to sync.');
-        return;
-      }
-
-      let remainingData = [];
-      for (const data of unsyncedData) {
-        const success = await sendData(data);
-        if (!success) {
-          remainingData.push(data);  // Retain failed records
-        }
-      }
-
-      localStorage.setItem('unsyncedData', JSON.stringify(remainingData));
-      console.log(remainingData.length > 0 
-        ? `${remainingData.length} records could not be synced.` 
-        : 'All offline data has been successfully synced.');
-    }
-
-    // Handle form submission
-    function submitForm(event) {
-      event.preventDefault();
-
-      const patientUUID = generateUUID();
-      const name = document.getElementById('name').value;
-      const age = document.getElementById('age').value;
-      const email = document.getElementById('email').value;
-
-      const data = { patient_id: patientUUID, name, age, email };
-
-      if (navigator.onLine) {
-        sendData(data);
-      } else {
-        alert('No connectivity; data saved offline.');
-        saveOfflineData(data);
-      }
-
-      alert(`Patient registered with ID: ${patientUUID}`);
-      document.getElementById('registrationForm').reset();
-    }
-
-    // Sync data when the page loads if online
-    window.addEventListener('load', function() {
-      if (navigator.onLine) syncData();
-    });
-
-    // Sync data when online connection is restored
-    window.addEventListener('online', syncData);
-  </script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Patient Registration</h1>
-  <form id="registrationForm" onsubmit="submitForm(event)">
-    <label for="name">Patient Name:</label><br>
-    <input type="text" id="name" name="name" required><br><br>
-
+  <form id="registrationForm">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name" required><br>
+    
     <label for="age">Age:</label><br>
-    <input type="number" id="age" name="age" required><br><br>
-
-    <label for="email">Email:</label><br>
-    <input type="email" id="email" name="email" required><br><br>
-
-    <input type="submit" value="Submit">
+    <input type="number" id="age" name="age" required><br>
+    
+    <label for="contact">Contact:</label><br>
+    <input type="text" id="contact" name="contact" required><br>
+    
+    <button type="submit">Register Patient</button>
   </form>
+  <p id="status"></p>
+  <script src="main.js"></script>
 </body>
 </html>
