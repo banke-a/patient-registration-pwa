@@ -3,7 +3,9 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  // Add any additional assets (CSS, JS, icons) here.
+  '/service-worker.js',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', function(event) {
@@ -20,7 +22,6 @@ self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
-        // Return cached response if found; otherwise, fetch from network.
         return response || fetch(event.request);
       })
   );
