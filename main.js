@@ -31,16 +31,36 @@ function clearStoredSubmissions() {
 }
 
 // Send a submission to the backend (Google Apps Script web app)
-// Using no-cors mode so the request is "simple"
-// Note: The response will be opaque.
-function sendSubmission(submission) {
+// Using no-cors mode so the request is "simple" (response will be opaque)
+function sendSubmission(submission, retries = 3) {
   return fetch('https://script.google.com/macros/s/AKfycbxVcPIUbilKyUqUYXRPC8PTe-zl_ceADc3mkcmvkJomb4ddXCVTQn4JH-8fCPSraSUNOw/exec', {
     method: 'POST',
-    mode: 'no-cors',  // no-cors avoids preflight issues
+    mode: 'no-cors',  // use no-cors to bypass CORS issues
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(submission)
+  })
+  .then(response => {
+    // In no-cors mode, the response is opaque.
+    if(response.type === 'opaque') {
+      console.log('Opaque response received for submission:', submission.uuid);
+      return { status: 'success' };
+    }
+    return response.json();
+  })
+  .catch(err => {
+    if (retries > 0) {
+      console.warn('Error sending submission, retrying...', submission.uuid, err);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(sendSubmission(submission, retries - 1));
+        }, 1000); // wait 1 second before retry
+      });
+    } else {
+      throw err;
+    }
   });
 }
+
 
 // Sync all stored submissions when online
 async function syncSubmissions() {
