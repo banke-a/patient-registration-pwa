@@ -31,12 +31,11 @@ function clearStoredSubmissions() {
 function sendSubmission(submission) {
   return fetch('https://script.google.com/macros/s/AKfycbxVcPIUbilKyUqUYXRPC8PTe-zl_ceADc3mkcmvkJomb4ddXCVTQn4JH-8fCPSraSUNOw/exec', {
     method: 'POST',
-    mode: 'cors', // ensures CORS is used
-    headers: { 'Content-Type': 'text/plain' },  // use text/plain to avoid preflight
+    mode: 'no-cors',  // use no-cors to bypass preflight errors
+    headers: { 'Content-Type': 'text/plain' }, // simple header
     body: JSON.stringify(submission)
   });
 }
-
 
 // Sync all stored submissions when online
 async function syncSubmissions() {
