@@ -31,11 +31,20 @@ function clearStoredSubmissions() {
 function sendSubmission(submission) {
   return fetch('https://script.google.com/macros/s/AKfycbxVcPIUbilKyUqUYXRPC8PTe-zl_ceADc3mkcmvkJomb4ddXCVTQn4JH-8fCPSraSUNOw/exec', {
     method: 'POST',
-    mode: 'no-cors',  // use no-cors to bypass preflight errors
-    headers: { 'Content-Type': 'text/plain' }, // simple header
+    mode: 'no-cors',  // use no-cors to bypass CORS issues
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(submission)
+  }).then(response => {
+    // In no-cors mode, the response is opaque.
+    if (response.type === 'opaque') {
+      // Treat any opaque response as a successful submission.
+      return { status: 'success' };
+    }
+    // If not opaque (unlikely with no-cors), attempt to parse as JSON.
+    return response.json();
   });
 }
+
 
 // Sync all stored submissions when online
 async function syncSubmissions() {
