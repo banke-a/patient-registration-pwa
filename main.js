@@ -29,7 +29,7 @@ function clearStoredSubmissions() {
 
 // Send a submission to the backend (Google Apps Script web app)
 function sendSubmission(submission) {
-  return fetch('https://script.google.com/macros/s/AKfycbysW6g3FBBPqzAbu10geyaTVqt-haTCpV7mAey_pTLXxKw6QTXwe4Vyk6mZxEv0DQpHcw/exec', {
+  return fetch('https://script.google.com/macros/s/AKfycbz-JBCdHeXbEPKDhb1h4pBxjTHl-WRQx4NUfdE54DjIYxrke4bhNgctTiCgm01BsJQ0MA/exec', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(submission)
