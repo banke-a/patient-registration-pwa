@@ -2,7 +2,6 @@
 
 const CACHE_NAME = 'patient-pwa-v1';
 const urlsToCache = [
-  '/',
   '/index.html',
   '/styles.css',
   '/main.js',
