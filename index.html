@@ -5,6 +5,7 @@
   <title>Patient Registration</title>
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <script>
     // --- Service Worker Registration ---
     if ('serviceWorker' in navigator) {
@@ -13,6 +14,14 @@
         console.log('Service Worker Registered', reg);
       }).catch(function(err) {
         console.error('Service Worker registration failed: ', err);
+      });
+    }
+
+    // Simple UUID generator (Version 4) – from https://stackoverflow.com/a/2117523
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
       });
     }
 
@@ -26,10 +35,10 @@
 
     // Send data to the Google Apps Script endpoint.
     function sendData(data) {
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbxOkIcDQvG96JbY9QJ8yqwyXJPB8rUTJ-WnsOqyO77ClPnKPMB5zbNejvYdCnB_hb6GUA/exec'; // Replace with your actual URL
+      const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'; // Replace with your actual URL
       return fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors',  // using no-cors mode for a simple POST
+        mode: 'no-cors',  // using no-cors for a simple POST; note this makes responses opaque.
         body: JSON.stringify(data)
       })
       .then(() => {
@@ -45,14 +54,9 @@
     // Asynchronously sync any stored offline data when connectivity is restored.
     async function syncData() {
       let unsyncedData = JSON.parse(localStorage.getItem('unsyncedData')) || [];
-      if (unsyncedData.length === 0) {
-        return; // Nothing to sync.
-      }
+      if (unsyncedData.length === 0) return; // Nothing to sync.
       
-      // Array to hold records that fail to send.
       let remainingData = [];
-      
-      // Loop over each unsynced record sequentially.
       for (const data of unsyncedData) {
         const success = await sendData(data);
         if (!success) {
@@ -60,9 +64,7 @@
         }
       }
       
-      // Update localStorage with any records that were not successfully synced.
       localStorage.setItem('unsyncedData', JSON.stringify(remainingData));
-      
       if (remainingData.length > 0) {
         console.log('Some records were not synced and remain stored locally.');
       } else {
@@ -73,19 +75,23 @@
     // Handle form submission.
     function submitForm(event) {
       event.preventDefault();
-      
+
+      // Generate a UUID for this registration if not already present.
+      let patientUUID = generateUUID();
+
       // Gather form values.
-      const patientName = document.getElementById('patientName').value;
+      const name = document.getElementById('name').value;
       const age = document.getElementById('age').value;
       const email = document.getElementById('email').value;
-      
+
       // Build the data object.
       const data = {
-        patientName: patientName,
+        patient_id: patientUUID,
+        name: name,
         age: age,
         email: email
       };
-      
+
       // Check connectivity and either send immediately or save offline.
       if (navigator.onLine) {
         sendData(data);
@@ -93,6 +99,9 @@
         alert("No connectivity; data saved offline.");
         saveOfflineData(data);
       }
+
+      // Optionally, display the generated patient_id to the field agent.
+      alert("Patient registered with ID: " + patientUUID);
       
       // Reset the form.
       document.getElementById('registrationForm').reset();
@@ -104,7 +113,7 @@
         syncData();
       }
     });
-    
+
     // Listen for the browser regaining online connectivity.
     window.addEventListener('online', syncData);
   </script>
@@ -112,8 +121,8 @@
 <body>
   <h1>Patient Registration</h1>
   <form id="registrationForm" onsubmit="submitForm(event)">
-    <label for="patientName">Patient Name:</label><br>
-    <input type="text" id="patientName" name="patientName" required><br><br>
+    <label for="name">Patient Name:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
 
     <label for="age">Age:</label><br>
     <input type="number" id="age" name="age" required><br><br>
