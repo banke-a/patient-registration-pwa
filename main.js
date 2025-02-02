@@ -89,7 +89,7 @@ document.getElementById('registrationForm').addEventListener('submit', function(
     uuid: generateUUID(),
     name: document.getElementById('name').value,
     age: parseInt(document.getElementById('age').value, 10),
-    contact: document.getElementById('contact').value,
+    email: document.getElementById('email').value,
     timestamp: new Date().toISOString()
   };
 
